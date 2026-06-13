@@ -1,0 +1,15 @@
+{
+  "name": "the-honest-line",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Honest Line — a public, daily-updating honesty meter for MLB win-probability predictions.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^5.13.0"
+  }
+}

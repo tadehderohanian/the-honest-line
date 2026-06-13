@@ -1,0 +1,70 @@
+---
+import Base from '../layouts/Base.astro';
+import GameCard from '../components/GameCard.astro';
+import { latestDay, latestGames } from '../lib/predictions';
+import { longDate } from '../lib/format';
+
+const day = latestDay();
+const games = latestGames();
+
+// Sort the slate by first-pitch time so the page reads like a day's schedule.
+games.sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''));
+
+const dateLabel = day ? longDate(day.date) : null;
+const anyMarket = games.some((g) => g.pClose != null);
+---
+
+<Base title="The Honest Line — today's MLB predictions, posted before first pitch">
+  <section class="hero">
+    <h1>Predictions you can hold us to.</h1>
+    <p class="lede">
+      Every MLB win probability below is posted <strong>before first pitch</strong>,
+      committed to a public record, and never edited or deleted. Soon we'll grade every
+      one of them in the open — so you can see exactly how honest this line really is.
+    </p>
+  </section>
+
+  <!-- Truth Meter placeholder: we refuse to show an accuracy number before we have
+       graded a single game. It turns on in Phase 2, once results start coming in. -->
+  <section class="panel truth-stub">
+    <div class="truth-dot" aria-hidden="true"></div>
+    <div>
+      <strong>Truth Meter — warming up.</strong>
+      <span class="muted">
+        We won't show a calibration score until real games have been graded. Once they
+        are, this is where you'll see whether the model is sharp, overconfident, or
+        getting humbled — updated daily.
+      </span>
+    </div>
+  </section>
+
+  {day ? (
+    <>
+      <h2>Today's slate <span class="muted dim">· {dateLabel}</span></h2>
+      <p class="muted slate-note">
+        {games.length} game{games.length === 1 ? '' : 's'}. “Leans” just means which side
+        the model gives better-than-even odds — not advice, not a bet.
+        {!anyMarket && ' Market lines aren’t connected yet, so each game honestly reads “no market line yet.”'}
+      </p>
+      <div class="grid">
+        {games.map((g) => <GameCard game={g} />)}
+      </div>
+    </>
+  ) : (
+    <p class="muted">No predictions loaded yet. Run the model and commit a day file to see games here.</p>
+  )}
+</Base>
+
+<style>
+  .hero { margin: 6px 0 22px; }
+  .hero .lede { max-width: 64ch; }
+
+  .truth-stub { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; margin-bottom: 8px; }
+  .truth-stub strong { display: block; margin-bottom: 2px; }
+  .truth-dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 5px; flex: none; background: var(--warn); box-shadow: 0 0 0 4px rgba(251,191,36,.15); }
+
+  .dim { font-weight: 400; font-size: 16px; }
+  .slate-note { margin-top: 0; font-size: 14px; max-width: 70ch; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+</style>

@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="About — The Honest Line" description="What The Honest Line is, and the promise behind it.">
+  <h1>About</h1>
+  <p class="lede">The Honest Line is an honesty meter for predictions — not a betting service.</p>
+
+  <h2>The promise</h2>
+  <p>
+    Anyone can brag about their wins and quietly forget their losses. We do the opposite.
+    Every game gets a model win probability that is:
+  </p>
+  <ul>
+    <li><strong>Posted before first pitch.</strong> No hindsight.</li>
+    <li><strong>Never edited and never deleted.</strong> Even the bad calls stay up.</li>
+    <li><strong>Committed to a public GitHub repository</strong> before games start, so the commit timestamps are public, tamper-evident proof of what we said and when.</li>
+    <li><strong>Graded in the open.</strong> We track how accurate the model really is — including when it's wrong.</li>
+  </ul>
+
+  <h2>What the numbers will mean</h2>
+  <p>
+    Once games are being graded, you'll see two honest measures of quality, in plain English:
+  </p>
+  <ul>
+    <li><strong>Brier score</strong> — “how wrong the probabilities were,” on average. Lower is better.</li>
+    <li><strong>Calibration</strong> — “does 60% really mean 60%?” When we say a team has a 60% chance, do those teams actually win about 60% of the time?</li>
+  </ul>
+  <p>
+    We may also compare the model to the betting market purely as a calibration curiosity —
+    is a simple, transparent model as sharp as the crowd? That's a question about honesty and
+    accuracy, never a suggestion to bet.
+  </p>
+
+  <h2>How it's built</h2>
+  <p>
+    A transparent baseline model (team strength via log5, a documented home-field edge, and a
+    small starting-pitcher adjustment) runs every morning on a schedule, writes that day's
+    predictions, and commits them. There are no accounts, no database, and nothing to log into —
+    just a public record and the math behind it.
+  </p>
+</Base>

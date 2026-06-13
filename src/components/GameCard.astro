@@ -1,0 +1,71 @@
+---
+import type { GameView } from '../lib/predictions';
+import { pct, favored, firstPitch } from '../lib/format';
+
+export interface Props { game: GameView; }
+const { game } = Astro.props;
+
+const homePct = Math.round(game.pHome * 100);
+const pick = favored(game.pHome, game.home, game.away);
+const hasMarket = game.pClose != null;
+---
+
+<a class="card panel" href={`/games/${game.slug}`}>
+  <div class="card-top">
+    <div class="matchup">
+      <span class="away">{game.away}</span>
+      <span class="at">@</span>
+      <span class="home">{game.home}</span>
+    </div>
+    <div class="time">{firstPitch(game.startTime)}</div>
+  </div>
+
+  <div class="pitchers">
+    {game.awayPitcher ?? 'TBD'} <span class="vs">vs</span> {game.homePitcher ?? 'TBD'}
+  </div>
+
+  <div class="prob">
+    <div class="prob-head">
+      <span class="prob-label">Model: P(home win)</span>
+      <span class="prob-val">{pct(game.pHome)}</span>
+    </div>
+    <div class="bar" role="img" aria-label={`Model gives the home team a ${homePct} percent chance to win`}>
+      <div class="bar-fill" style={`width:${homePct}%`}></div>
+      <div class="bar-mid" aria-hidden="true"></div>
+    </div>
+    <div class="prob-foot">
+      <span class="pick">Leans <strong>{pick}</strong></span>
+      <span class="market">
+        {hasMarket
+          ? <>Market {pct(game.pClose)} · diff {(game.edge! > 0 ? '+' : '')}{Math.round(game.edge! * 100)}%</>
+          : <span class="muted">no market line yet</span>}
+      </span>
+    </div>
+  </div>
+
+  <p class="why"><span class="why-tag">why</span> {game.why}</p>
+</a>
+
+<style>
+  .card { display: block; padding: 16px 18px; margin: 0; color: var(--ink); transition: border-color .15s, transform .15s; }
+  .card:hover { text-decoration: none; border-color: var(--accent); transform: translateY(-1px); }
+  .card-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .matchup { font-weight: 700; font-size: 17px; }
+  .matchup .at { color: var(--muted); margin: 0 6px; font-weight: 500; }
+  .time { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .pitchers { color: var(--muted); font-size: 13px; margin-top: 3px; }
+  .pitchers .vs { opacity: .6; margin: 0 4px; }
+
+  .prob { margin-top: 12px; }
+  .prob-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .prob-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+  .prob-val { font-weight: 800; font-size: 18px; }
+  .bar { position: relative; height: 10px; border-radius: 999px; background: var(--panel-2); margin: 6px 0 7px; overflow: hidden; }
+  .bar-fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--accent), #7cc4ff); border-radius: 999px; }
+  .bar-mid { position: absolute; top: -2px; bottom: -2px; left: 50%; width: 1px; background: rgba(255,255,255,.35); }
+  .prob-foot { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--muted); }
+  .pick strong { color: var(--ink); }
+
+  .why { margin: 12px 0 0; font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .why-tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--accent); border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; margin-right: 6px; vertical-align: 1px; }
+</style>

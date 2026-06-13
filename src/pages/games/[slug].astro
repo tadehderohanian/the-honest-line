@@ -1,0 +1,120 @@
+---
+import Base from '../../layouts/Base.astro';
+import { allGames, latestDay } from '../../lib/predictions';
+import { pct, favored, firstPitch, longDate } from '../../lib/format';
+
+// One static page per prediction. Astro calls this at build time to learn
+// every URL it needs to generate.
+export function getStaticPaths() {
+  return allGames().map((game) => ({
+    params: { slug: game.slug },
+    props: { game },
+  }));
+}
+
+const { game } = Astro.props;
+const c = game.components;
+const pick = favored(game.pHome, game.home, game.away);
+const generatedAt = latestDay()?.generatedAt ?? null;
+
+// Build the plain-English breakdown rows from the model's own components.
+const rows = [
+  { label: 'Team strength (log5)', val: pct(c.log5_base), note: `${game.home} ${pct(c.homeWinPct)} vs ${game.away} ${pct(c.awayWinPct)} season win rate` },
+  { label: 'Home-field edge', val: `+${Math.round(c.home_edge * 100)}%`, note: 'Home teams win ~54% of the time historically' },
+  { label: 'Home starter', val: `${c.home_pitcher_adj >= 0 ? '+' : ''}${Math.round(c.home_pitcher_adj * 100)}%`, note: game.homeEra != null ? `${game.homePitcher ?? 'starter'} · ${game.homeEra.toFixed(2)} ERA` : 'no ERA available yet' },
+  { label: 'Away starter', val: `${c.away_pitcher_adj >= 0 ? '+' : ''}${Math.round(c.away_pitcher_adj * 100)}%`, note: game.awayEra != null ? `${game.awayPitcher ?? 'starter'} · ${game.awayEra.toFixed(2)} ERA` : 'no ERA available yet' },
+];
+
+// Structured data so search engines understand this is a specific game.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SportsEvent',
+  name: `${game.away} at ${game.home}`,
+  sport: 'Baseball',
+  startDate: game.startTime ?? undefined,
+  homeTeam: { '@type': 'SportsTeam', name: game.home },
+  awayTeam: { '@type': 'SportsTeam', name: game.away },
+};
+
+const title = `${game.away} @ ${game.home} — model prediction · ${longDate(game.date)}`;
+const desc = `The Honest Line gives the home team a ${pct(game.pHome)} chance. Posted before first pitch on ${longDate(game.date)} and never edited.`;
+---
+
+<Base title={title} description={desc}>
+  <p class="crumb"><a href="/">← Today's slate</a></p>
+
+  <h1>{game.away} <span class="muted at">@</span> {game.home}</h1>
+  <p class="lede">{longDate(game.date)} · first pitch {firstPitch(game.startTime)}</p>
+
+  <section class="panel headline">
+    <div class="big">
+      <span class="big-num">{pct(game.pHome)}</span>
+      <span class="big-cap">model P({game.home} win)</span>
+    </div>
+    <div class="headline-meta">
+      <p>Model leans <strong>{pick}</strong>.</p>
+      <p class="market muted">
+        {game.pClose != null
+          ? `Market: ${pct(game.pClose)} (difference ${game.edge! > 0 ? '+' : ''}${Math.round(game.edge! * 100)}%).`
+          : 'No market line connected yet — we won’t invent one.'}
+      </p>
+    </div>
+  </section>
+
+  <section class="panel result">
+    {game.result ? (
+      <p>
+        <strong>Final:</strong> {game.away} {game.result.awayScore}, {game.home} {game.result.homeScore}.
+        The home team {game.result.homeWin ? 'won' : 'lost'} — the model was
+        <strong>{(game.result.homeWin) === (game.pHome >= 0.5) ? ' on the right side' : ' on the wrong side'}</strong> of this one.
+      </p>
+    ) : (
+      <p class="muted">Not graded yet. The final score and an honest right/wrong verdict appear here once the game ends.</p>
+    )}
+  </section>
+
+  <h2>Why the model lands here</h2>
+  <p class="muted small">{game.why}</p>
+  <table class="breakdown">
+    <tbody>
+      {rows.map((r) => (
+        <tr>
+          <th>{r.label}</th>
+          <td class="num">{r.val}</td>
+          <td class="note muted">{r.note}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+
+  <p class="ledger muted small">
+    {generatedAt
+      ? <>Generated {new Date(generatedAt).toUTCString()} and committed to the public record before first pitch. Never edited.</>
+      : 'Committed to the public record before first pitch. Never edited.'}
+  </p>
+
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+</Base>
+
+<style>
+  .crumb { font-size: 14px; margin: 0 0 14px; }
+  h1 .at { font-weight: 400; margin: 0 6px; }
+
+  .headline { display: flex; gap: 22px; align-items: center; padding: 20px; margin-top: 8px; flex-wrap: wrap; }
+  .big { display: flex; flex-direction: column; align-items: center; min-width: 130px; }
+  .big-num { font-size: 46px; font-weight: 800; line-height: 1; }
+  .big-cap { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 4px; }
+  .headline-meta p { margin: 0 0 4px; }
+
+  .result { padding: 14px 18px; margin: 14px 0 0; }
+  .result p { margin: 0; }
+
+  .small { font-size: 14px; }
+  .breakdown { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  .breakdown th { text-align: left; font-weight: 600; padding: 9px 10px; border-top: 1px solid var(--line); white-space: nowrap; }
+  .breakdown td { padding: 9px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+  .breakdown .num { font-weight: 700; text-align: right; white-space: nowrap; }
+  .breakdown .note { font-size: 13px; }
+  .ledger { margin-top: 18px; }
+  @media (max-width: 560px) { .breakdown .note { display: none; } }
+</style>

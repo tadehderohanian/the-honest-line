@@ -1,0 +1,116 @@
+---
+// The shared page shell: <head>, header, footer, and global styles.
+// Every page wraps its content in this so the look stays consistent.
+export interface Props {
+  title: string;
+  description?: string;
+}
+const {
+  title,
+  description = 'A public honesty meter for MLB predictions. Every call is posted before first pitch, never edited, never deleted — and we track how accurate the model really is.',
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta name="theme-color" content="#0b1020" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>📈</text></svg>" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="/">
+          <span class="brand-mark">The Honest Line</span>
+          <span class="brand-sub">an honesty meter for predictions</span>
+        </a>
+        <nav class="nav">
+          <a href="/">Today</a>
+          <a href="/about">About</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>
+          <strong>The Honest Line</strong> is not betting advice. We post a model's
+          win probabilities before first pitch, never edit them, and publicly track
+          how accurate they turn out to be — including when they're wrong.
+        </p>
+        <p class="muted">
+          Game data from the free MLB Stats API. Predictions are committed to a public
+          GitHub repository before games begin; the commit history is the tamper-evident record.
+        </p>
+      </div>
+    </footer>
+
+    <style is:global>
+      :root {
+        --bg: #0b1020;
+        --panel: #141b33;
+        --panel-2: #1b2545;
+        --ink: #e8ecf6;
+        --muted: #9aa6c4;
+        --line: #2a345a;
+        --accent: #5db0ff;
+        --good: #4ade80;
+        --warn: #fbbf24;
+        --bad: #f87171;
+        --radius: 14px;
+        --wrap: 920px;
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+      .wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 0 20px; }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .muted { color: var(--muted); }
+
+      .site-header { border-bottom: 1px solid var(--line); background: rgba(11,16,32,.7); position: sticky; top: 0; backdrop-filter: blur(8px); z-index: 10; }
+      .header-inner { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; padding-bottom: 14px; }
+      .brand { display: flex; flex-direction: column; line-height: 1.1; }
+      .brand:hover { text-decoration: none; }
+      .brand-mark { font-weight: 800; font-size: 20px; color: var(--ink); letter-spacing: .2px; }
+      .brand-sub { font-size: 12px; color: var(--muted); }
+      .nav a { margin-left: 18px; color: var(--muted); font-weight: 600; font-size: 15px; }
+      .nav a:hover { color: var(--ink); text-decoration: none; }
+
+      main.wrap { padding-top: 28px; padding-bottom: 48px; }
+
+      .site-footer { border-top: 1px solid var(--line); padding: 26px 0 40px; margin-top: 24px; }
+      .site-footer p { max-width: 70ch; font-size: 14px; }
+
+      /* generic panel + card primitives reused across pages */
+      .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+      h1 { font-size: 30px; line-height: 1.15; margin: 0 0 6px; }
+      h2 { font-size: 21px; margin: 32px 0 12px; }
+      .lede { color: var(--muted); font-size: 16px; margin: 0 0 8px; }
+
+      @media (max-width: 560px) {
+        .brand-sub { display: none; }
+        h1 { font-size: 25px; }
+      }
+    </style>
+  </body>
+</html>

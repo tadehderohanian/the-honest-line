@@ -1,0 +1,65 @@
+name: Daily predictions (the ledger lock)
+
+# Runs every morning, well before first pitch, to:
+#   1. run the model on today's real MLB slate,
+#   2. write that day's predictions JSON,
+#   3. commit it to the repo — the commit timestamp is the public, tamper-evident
+#      proof of what we predicted and when.
+#
+# The commit triggers an automatic redeploy on Vercel/Netlify, so the live site
+# updates on its own. You can also run this by hand from the Actions tab
+# (the "Run workflow" button) — handy for testing.
+
+on:
+  schedule:
+    # 13:00 UTC = 9:00 AM US Eastern (EDT). MLB games rarely start before ~12 PM ET,
+    # so this locks predictions in with hours to spare. GitHub may delay cron by a
+    # few minutes under load; that's fine given the buffer.
+    - cron: '0 13 * * *'
+  workflow_dispatch: {}
+
+# Allow the workflow to push the new predictions file back to the repo.
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-predictions
+  cancel-in-progress: false
+
+jobs:
+  predict:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Determine today's date (US Eastern)
+        id: today
+        run: echo "date=$(TZ=America/New_York date +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Run the model and write today's predictions
+        run: |
+          mkdir -p src/data/predictions
+          python scripts/mlb_model.py \
+            --date "${{ steps.today.outputs.date }}" \
+            --out "src/data/predictions/${{ steps.today.outputs.date }}.json"
+
+      - name: Commit the locked predictions
+        run: |
+          git config user.name  "honest-line-bot"
+          git config user.email "honest-line-bot@users.noreply.github.com"
+          git add "src/data/predictions/${{ steps.today.outputs.date }}.json"
+          if git diff --cached --quiet; then
+            echo "No new predictions to commit (already locked, or no games today)."
+          else
+            git commit -m "Lock predictions for ${{ steps.today.outputs.date }} [skip ci]"
+            git push
+          fi
