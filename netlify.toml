@@ -1,0 +1,9 @@
+# Tells Netlify how to build the site. With this file, importing the repo is a
+# one-click affair — no settings to fill in by hand.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  # Astro 5 needs a modern Node. Pin it so cloud builds match local.
+  NODE_VERSION = "22"
